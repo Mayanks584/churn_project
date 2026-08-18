@@ -1,0 +1,101 @@
+# Project Configuration
+
+project:
+  name: "Customer Churn Prediction"
+  version: "1.0.0"
+  description: "End-to-end ML pipeline for customer churn prediction"
+  author: "Ishu"
+
+# Paths
+paths:
+  raw_data: "data/raw/telco_churn.csv"
+  processed_data: "data/processed/"
+  model_dir: "models/saved/"
+  artifacts_dir: "models/artifacts/"
+  reports_dir: "reports/"
+  logs_dir: "logs/"
+
+# Data Settings
+data:
+  target_column: "Churn"
+  test_size: 0.2
+  val_size: 0.1
+  random_state: 42
+  stratify: true
+
+# Feature Engineering
+features:
+  categorical_columns:
+    - "gender"
+    - "SeniorCitizen"
+    - "Partner"
+    - "Dependents"
+    - "PhoneService"
+    - "MultipleLines"
+    - "InternetService"
+    - "OnlineSecurity"
+    - "OnlineBackup"
+    - "DeviceProtection"
+    - "TechSupport"
+    - "StreamingTV"
+    - "StreamingMovies"
+    - "Contract"
+    - "PaperlessBilling"
+    - "PaymentMethod"
+  numerical_columns:
+    - "tenure"
+    - "MonthlyCharges"
+    - "TotalCharges"
+  drop_columns:
+    - "customerID"
+
+# Model Hyperparameters
+models:
+  logistic_regression:
+    C: 1.0
+    max_iter: 1000
+    solver: "lbfgs"
+    random_state: 42
+
+  random_forest:
+    n_estimators: 100
+    max_depth: 10
+    min_samples_split: 5
+    random_state: 42
+
+  xgboost:
+    n_estimators: 200
+    learning_rate: 0.05
+    max_depth: 6
+    subsample: 0.8
+    colsample_bytree: 0.8
+    use_label_encoder: false
+    eval_metric: "logloss"
+    random_state: 42
+
+  lightgbm:
+    n_estimators: 200
+    learning_rate: 0.05
+    max_depth: 6
+    num_leaves: 31
+    random_state: 42
+
+# Training Settings
+training:
+  cross_validation_folds: 5
+  scoring_metric: "roc_auc"
+  early_stopping_rounds: 20
+  handle_imbalance: true
+  imbalance_strategy: "smote"  # Options: smote, class_weight, undersample
+
+# MLflow
+mlflow:
+  tracking_uri: "mlruns/"
+  experiment_name: "churn_prediction"
+  register_model: true
+
+# Evaluation Thresholds
+evaluation:
+  classification_threshold: 0.5
+  min_roc_auc: 0.80
+  min_f1_score: 0.55

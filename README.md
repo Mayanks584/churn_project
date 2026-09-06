@@ -24,6 +24,7 @@ Each row represents one customer because `user_id` is unique for every row.
 # 1. Overall Data Preprocessing Flow
 
 ```text
+
 netflix_large_dataset_cleaned.csv
         ↓
 Data quality checks
@@ -64,6 +65,7 @@ Therefore, the existing dataset is already one row per customer.
 # 2. Complete Project Roadmap
 
 ```text
+
 1. Dataset Identification
         ↓
 2. Input & Output Definition

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Netflix Customer Churn Prediction — Version 1</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <div class="brand">
+        <span class="brand-badge">NETFLIX ML</span>
+        <div>
+          <h1>Customer Churn Risk Predictor <span class="version-pill">v1.0</span></h1>
+          <p class="subtitle">Local College AI &amp; ML Project Demo • Single-Customer Prediction</p>
+        </div>
+      </div>
+      <div class="model-status" id="modelStatusBadge">
+        Loading model contract...
+      </div>
+    </div>
+  </header>
+
+  <main class="container main-grid">
+    <!-- Left Column: Input Form & Presets -->
+    <section class="card form-card">
+      <div class="card-header">
+        <h2>Customer Profile Input (24-Feature Contract)</h2>
+        <p class="muted">
+          Enter customer attributes below. <code>monthly_fee</code>, <code>region</code>, and
+          <code>watch_time_per_session</code> are derived using verified dataset rules;
+          <code>rating</code> and <code>liked</code> remain independent inputs.
+        </p>
+      </div>
+
+      <div class="preset-bar">
+        <div class="preset-title">
+          Synthetic UI Demo Presets <span class="muted">(for interface testing only — not real customer records)</span>
+        </div>
+        <div class="preset-buttons" id="presetButtons"></div>
+      </div>
+
+      <div id="errorBanner" class="alert alert-error hidden" role="alert"></div>
+
+      <form id="churnForm" novalidate>
+        <!-- Group 1: Subscription & Account -->
+        <fieldset class="fieldset">
+          <legend>1. Subscription &amp; Demographics</legend>
+          <div class="form-grid">
+            <label>
+              Subscription Plan
+              <select id="subscription_plan" name="subscription_plan" required></select>
+            </label>
+            <label>
+              Derived Monthly Fee ($)
+              <input id="derived_monthly_fee" type="text" readonly class="readonly-input" value="—" />
+            </label>
+            <label>
+              Country
+              <select id="country" name="country" required></select>
+            </label>
+            <label>
+              Derived Region
+              <input id="derived_region" type="text" readonly class="readonly-input" value="—" />
+            </label>
+            <label>
+              Age Group
+              <select id="age_group" name="age_group" required></select>
+            </label>
+            <label>
+              Gender
+              <select id="gender" name="gender" required></select>
+            </label>
+            <label>
+              Payment Method
+              <select id="payment_method" name="payment_method" required></select>
+            </label>
+            <label>
+              Discount Applied
+              <select id="discount_applied" name="discount_applied" required></select>
+            </label>
+            <label>
+              Tenure Input Mode
+              <select id="tenureMode">
+                <option value="days">Direct Tenure (days)</option>
+                <option value="date">Subscription Start Date (vs 2025-04-14)</option>
+              </select>
+            </label>
+            <label id="tenureDaysWrap">
+              Tenure Days (0–5000)
+              <input id="tenure_days" name="tenure_days" type="number" step="1" min="0" max="5000" required />
+            </label>
+            <label id="startDateWrap" class="hidden">
+              Subscription Start Date (&le; 2025-04-14)
+              <input id="subscription_start_date" name="subscription_start_date" type="date" max="2025-04-14" value="2023-06-01" />
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- Group 2: Viewing Engagement -->
+        <fieldset class="fieldset">
+          <legend>2. Viewing Engagement</legend>
+          <div class="form-grid">
+            <label>
+              Session Watch Time (minutes, 1–1440)
+              <input id="watch_time_minutes" name="watch_time_minutes" type="number" step="any" min="1" max="1440" required />
+            </label>
+            <label>
+              Session Count (integer &ge; 1)
+              <input id="session_count" name="session_count" type="number" step="1" min="1" max="100" required />
+            </label>
+            <label>
+              Derived Watch Time / Session (min)
+              <input id="derived_wtps" type="text" readonly class="readonly-input" value="—" />
+            </label>
+            <label>
+              Avg Weekly Watch Time (min, 0–10080)
+              <input id="avg_weekly_watch_time" name="avg_weekly_watch_time" type="number" step="any" min="0" max="10080" required />
+            </label>
+            <label>
+              Completion Percentage (0–100)
+              <input id="completion_percentage" name="completion_percentage" type="number" step="any" min="0" max="100" required />
+            </label>
+            <label>
+              Days Since Last Watch (0–3650)
+              <input id="days_since_last_watch" name="days_since_last_watch" type="number" step="any" min="0" max="3650" required />
+            </label>
+            <label>
+              Content Diversity Score (0.0–1.0)
+              <input id="content_diversity_score" name="content_diversity_score" type="number" step="0.01" min="0" max="1" required />
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- Group 3: Content & Feedback (Independent Inputs) -->
+        <fieldset class="fieldset">
+          <legend>3. Content Preferences &amp; Feedback (Independent Inputs)</legend>
+          <div class="form-grid">
+            <label>
+              Content Type
+              <select id="content_type" name="content_type" required></select>
+            </label>
+            <label>
+              Genre
+              <select id="genre" name="genre" required></select>
+            </label>
+            <label>
+              Language
+              <select id="language" name="language" required></select>
+            </label>
+            <label>
+              Device Type
+              <select id="device_type" name="device_type" required></select>
+            </label>
+            <label>
+              Time of Day
+              <select id="time_of_day" name="time_of_day" required></select>
+            </label>
+            <label>
+              Recommendation Source
+              <select id="recommendation_source" name="recommendation_source" required></select>
+            </label>
+            <label>
+              Rating (1–5)
+              <input id="rating" name="rating" type="number" step="1" min="1" max="5" required />
+            </label>
+            <label>
+              Liked (independent of rating)
+              <select id="liked" name="liked" required></select>
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="predictBtn">Estimate Churn Risk</button>
+          <button type="button" class="btn btn-ghost" id="resetBtn">Reset to Mid-Engagement Demo</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Right Column: Result & Separated Explanations -->
+    <section class="results-column">
+      <div class="card result-card">
+        <div class="card-header">
+          <h2>Prediction Output</h2>
+          <p class="muted" id="resultSubtitle">Submit the form to run the exported notebook pipeline.</p>
+        </div>
+
+        <div id="resultEmpty" class="empty-state">
+          <p>Select a synthetic demo preset or enter customer attributes, then click <strong>Estimate Churn Risk</strong>.</p>
+        </div>
+
+        <div id="resultContent" class="hidden">
+          <div class="prob-hero">
+            <div>
+              <span class="prob-label">Estimated Churn Probability</span>
+              <div class="prob-number" id="probPct">—</div>
+            </div>
+            <div class="badges-col">
+              <span class="risk-badge" id="riskBadge">—</span>
+              <span class="verdict-chip" id="verdictChip">—</span>
+            </div>
+          </div>
+
+          <div class="gauge-wrap">
+            <div class="gauge-track">
+              <div class="gauge-fill" id="gaugeFill"></div>
+              <div class="gauge-marker" style="left: 40%" title="Demo Low/Moderate boundary: 40%"></div>
+              <div class="gauge-marker marker-cutoff" style="left: 50%" title="Balanced model cutoff: 50%"></div>
+            </div>
+            <div class="gauge-legend">
+              <span>0%</span>
+              <span>40% (Demo tier)</span>
+              <span>50% (Model cutoff)</span>
+              <span>100%</span>
+            </div>
+          </div>
+
+          <div class="disclaimer-box" id="probDisclaimer"></div>
+
+          <div class="risk-tiers-box">
+            <h3>Risk Category Cutoffs &amp; X_train 5-Fold CV Context</h3>
+            <div id="riskBandTable"></div>
+          </div>
+
+          <div class="derived-summary" id="derivedSummary"></div>
+        </div>
+      </div>
+
+      <!-- Panel A: Descriptive Context -->
+      <div class="card context-card">
+        <div class="card-header">
+          <h3>Panel A: Submitted Customer vs. X_train Descriptive Means</h3>
+          <p class="muted">
+            Descriptive comparison against training-set averages (40,000 rows). This shows where the submitted profile sits relative to historical groups and does <strong>not</strong> prove causation or per-row SHAP attribution.
+          </p>
+        </div>
+        <div id="descriptiveTableWrap" class="table-wrap muted">
+          Run a prediction to compare submitted values against <code>X_train</code> averages.
+        </div>
+      </div>
+
+      <!-- Panel B: Global Model Behavior -->
+      <div class="card context-card">
+        <div class="card-header">
+          <h3>Panel B: Global Model Insights &amp; Dataset Group Rates</h3>
+          <p class="muted">
+            Global properties of the fitted model and <code>X_train</code> dataset — separate from any individual prediction. Associations are statistical, not causal.
+          </p>
+        </div>
+        <div id="globalInsightsWrap" class="global-grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer container">
+    Local-only Version 1 Demo (<code>127.0.0.1</code>) • Powered by exported <code>final_rf_model</code> from <code>Netflix_Churn_Syllabus_Implementation_v2.ipynb</code>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
+

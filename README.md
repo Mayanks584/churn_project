@@ -1,6 +1,9 @@
-# Netflix Customer Churn Prediction — Complete AI & ML Syllabus Project
+# Netflix Customer Churn & Watch-Time Prediction — Complete AIML Syllabus Project
 
-This project extends the original Netflix Customer Churn binary classification workflow (`Active = 0`, `Cancelled = 1`) into a complete, college-syllabus-aligned Machine Learning notebook with beginner-friendly English + Hinglish explanations before every code cell.
+This repository contains **two independent Machine Learning modules** built on the same approved Netflix customer dataset (`50,000` unique customers, `29` columns), plus a local Version 1 churn-prediction web frontend:
+
+- **Module 1 (Customer Churn Prediction — Classification & Clustering):** Predicts `churn_status` (`Active = 0`, `Cancelled = 1`) and segments customers via K-Means, Hierarchical Clustering, and DBSCAN.
+- **Module 2 (Customer Watch-Time Prediction — Regression):** Independent CE-2 regression module predicting continuous `watch_time_minutes` (`10`–`180` minutes) using Simple Linear Regression, Multiple Linear Regression, and Polynomial Regression evaluated with `MAE`, `MSE`, `RMSE`, and `R²`.
 
 ---
 
@@ -8,38 +11,23 @@ This project extends the original Netflix Customer Churn binary classification w
 
 | File | Purpose |
 |---|---|
-| [Netflix_Churn_Syllabus_Implementation_v2.ipynb](./Netflix_Churn_Syllabus_Implementation_v2.ipynb) | **Latest Verified Deliverable** (`233` cells: `121` Markdown + `112` freshly executed Code cells, `0` errors, `0` SVC deprecation warnings). Includes environment verification, cleaned Part A explanations, corrected Phase 3 checks, `X_train`-only Phase 11 clustering, and Phases 3–16. |
-| [Netflix_Churn_Syllabus_Implementation.ipynb](./Netflix_Churn_Syllabus_Implementation.ipynb) | Initial v1 extended notebook preserved prior to v2 revisions. |
-| [Untitled_final_fully_explained.ipynb](./Untitled_final_fully_explained.ipynb) | Original documented notebook — **preserved unmodified**. |
-| [backups/Untitled_final_fully_explained_backup.ipynb](./backups/Untitled_final_fully_explained_backup.ipynb) | Verified SHA-256 backup copy of the original notebook. |
+| [Netflix_Churn_and_Watch_Time_Regression_v3.ipynb](./Netflix_Churn_and_Watch_Time_Regression_v3.ipynb) | **Latest Combined Deliverable (Modules 1 + 2)** (`250` cells: `130` Markdown + `120` freshly executed Code cells, `0` errors). Module 1 is preserved intact; Module 2 adds Phases 1–10 with 9-point English + Hinglish explanations before every code cell. |
+| [Netflix_Churn_and_Watch_Time_Regression_v3_Code_Only.ipynb](./Netflix_Churn_and_Watch_Time_Regression_v3_Code_Only.ipynb) | Code-only companion (`120` code cells in exact order from `v3.ipynb`, `0` Markdown cells, cleared outputs). |
+| [Netflix_Churn_Syllabus_Implementation_v2.ipynb](./Netflix_Churn_Syllabus_Implementation_v2.ipynb) | Completed Module 1 explained notebook — **preserved unmodified**. |
+| [Netflix_Churn_Syllabus_Implementation_v2_Code_Only.ipynb](./Netflix_Churn_Syllabus_Implementation_v2_Code_Only.ipynb) | Completed Module 1 code-only notebook — **preserved unmodified**. |
+| [backups/Untitled_final_fully_explained_backup.ipynb](./backups/Untitled_final_fully_explained_backup.ipynb) | Verified SHA-256 backup copy of the original documented notebook — **preserved unmodified**. |
+| [backups/README_before_module2_backup.md](./backups/README_before_module2_backup.md) | SHA-256 backup of `README.md` prior to Module 2 additions. |
 | [data/original_data/netflix_large_dataset_cleaned.csv](./data/original_data/netflix_large_dataset_cleaned.csv) | Approved dataset (`50,000` unique customers, `29` columns) — **preserved unmodified**. |
 
 ---
 
-## Dataset & Feature Overview
+## Module 1 Summary: Customer Churn Prediction (Classification & Clustering)
 
-- **Rows / Customers**: `50,000` unique `user_id`s (`0` duplicate rows, `0` original missing values, `0` whitespace/casing errors).
 - **Target (`churn_status`)**: `Active = 41,391 (82.78%)` $\rightarrow 0$; `Cancelled = 8,609 (17.22%)` $\rightarrow 1$.
 - **Train / Test Split**: Stratified 80/20 split (`random_state=42`): `40,000` training rows (`X_train`), `10,000` test rows (`X_test`).
-- **Approved Features (`24`)**:
-  - **Numeric (`10`)**: `monthly_fee`, `watch_time_minutes`, `session_count`, `completion_percentage`, `rating`, `days_since_last_watch`, `avg_weekly_watch_time`, `content_diversity_score`, plus engineered `tenure_days` and `watch_time_per_session`.
-  - **Categorical (`14`)**: `age_group`, `gender`, `country`, `region`, `subscription_plan`, `payment_method`, `discount_applied`, `content_type`, `genre`, `language`, `device_type`, `time_of_day`, `liked`, `recommendation_source`.
-- **Excluded Columns**: `user_id` (identifier), `title` (20,987 unique values), `subscription_end_date`, `churn_status` (target), `release_year`, and raw dates (`date_watched`, `subscription_start_date`).
-  - **Why `subscription_end_date` is excluded (100% Target Leakage)**: `Cancelled` rows store full timestamps (`%Y-%m-%d %H:%M:%S`), whereas all `41,391` `Active` rows store the valid date-only ISO placeholder `"2026-02-07"` (`%Y-%m-%d`). Under **default date-format inference with `errors="coerce"`**, `pd.to_datetime` infers `%Y-%m-%d %H:%M:%S` and coerces `"2026-02-07"` to `NaT`; under **explicit `format="mixed"` parsing**, both formats parse into valid timestamps. In both cases, all `41,391` placeholder rows align 100% with `Active` customers, confirming severe target leakage.
-- **Data Audit Note (`liked` vs `rating`)**: Cross-tabulation shows a deterministic mapping (`rating` 1–3 $\rightarrow$ `liked="No"`, `rating` 4–5 $\rightarrow$ `liked="Yes"`), indicating redundant information between these two columns while keeping original data unmodified.
+- **Excluded Leakage**: `subscription_end_date` (`41,391` `Active` rows use date-only ISO `"2026-02-07"`, while `Cancelled` rows use `%Y-%m-%d %H:%M:%S` timestamps; default `pd.to_datetime(..., errors="coerce")` coerces `"2026-02-07"` to `NaT`, whereas `format="mixed"` parses both — either way, 100% target leakage).
 
----
-
-## Methodology Guardrails
-
-1. **Leakage Prevention**: All `ColumnTransformer` preprocessing (`SimpleImputer`, `StandardScaler`, `OneHotEncoder`), `SelectKBest`, `RFE`, `PCA`, and Phase 11 `StandardScaler`/K-Means selection are fitted strictly on `X_train` (and inside CV folds during `StratifiedKFold(n_splits=5, shuffle=True, random_state=42)`).
-2. **`X_test` Protection**: `X_test` was used for the preserved historical baseline models and was protected from all new model selection, feature selection, clustering $K$ selection, and hyperparameter tuning decisions. Selected final models were evaluated once on `X_test` at the Final Evaluation stage.
-3. **Separate PR Metrics**: **Average Precision (AP)** (`average_precision_score`) and **Trapezoidal PR-AUC** (`auc(recall, precision)` via `precision_recall_curve`) are computed and reported separately.
-4. **No Artificial Inflation**: No rows were deleted for statistical outliers, no synthetic churn labels were created, and SMOTE was not applied.
-
----
-
-## Model Comparison Results (Held-Out `X_test`, $n = 10,000$)
+### Module 1 Held-Out Test Comparison (`X_test`, $n = 10,000$)
 
 | Model | Train Scope | Accuracy | Precision | Recall | F1 | ROC-AUC | Average Precision (AP) | PR-AUC (Trapezoidal) | Confusion Matrix (`TN, FP, FN, TP`) |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---|
@@ -52,32 +40,74 @@ This project extends the original Netflix Customer Churn binary classification w
 | **KNN (`K=5`)** *(Historical)* | Full `X_train` (40k) | 0.8006 | 0.2405 | 0.0732 | 0.1122 | 0.5594 | 0.1992 | 0.2148 | `7880, 398, 1596, 126` |
 | **Logistic Regression** *(Historical)* | Full `X_train` (40k) | 0.8278 | 0.0000 | 0.0000 | 0.0000 | 0.6345 | 0.2379 | 0.2374 | `8278, 0, 1722, 0` |
 
-### Key Analytical Findings
-- **5-Fold Stratified CV (`X_train`) & Hyperparameter Tuning**: Tuned Random Forest (`n_estimators=100, max_depth=6, min_samples_split=10, min_samples_leaf=5, class_weight='balanced'`) achieved the highest CV `F1` (`0.3520`), while Tuned Decision Tree (`max_depth=4, min_samples_leaf=5`) achieved `CV F1 = 0.3502`.
-- **Bias-Variance Trade-Off**: Unconstrained Decision Tree (`max_depth=None`) overfit with `Train F1 = 0.4884` vs `Validation F1 = 0.2796` (`gap = +0.2088`), whereas depth-capped Tuned Random Forest (`max_depth=6`) kept the Train–Validation F1 gap at `+0.0039`.
-- **Feature Selection & Importance**: `SelectKBest(f_classif, k=10)` achieved `CV F1 = 0.3519` (outperforming all 73 features at `0.3493`). Validation Permutation Importance confirmed `subscription_plan` (`+0.04064` F1 drop) and `monthly_fee` (`+0.00549`) as top predictors while exposing MDI inflation on collinear `session_count`.
-- **PCA Comparison**: Retaining 95% variance (`73 -> ~44` components) slightly improved KNN CV `F1` (`0.1010 -> 0.1070`) and runtime, slightly hurt Random Forest CV `F1` (`0.3520 -> 0.3492`) and more than doubled RF CV runtime (`1.76s -> 4.22s`), and left linear models nearly unchanged.
-- **Customer Segmentation (`X_train` Only, Phase 11)**: Removing redundant watch-volume features (`watch_time_minutes`, `session_count`, $r = 0.952$) shifted `X_train` K-Means ($K=2$) from `Silhouette = 0.2468` (Full, 10 features: `22.20%` vs `10.58%` post-hoc `y_train` churn) to `0.2000` (Reduced, 8 features: `24.47%` vs `11.72%` post-hoc `y_train` churn). Agglomerative Ward (`n=2,000` `X_train` sample) scored `0.1986` at $K=2$, and DBSCAN (`eps=1.6, min_samples=25`, `n=5,000` `X_train` sample) found 2 clusters with `3.74%` noise (`0.2273` noise-excluded Silhouette).
-- **Ethical AI & Fairness (Phase 12)**: Every demographic and geographic subgroup (`gender`, `age_group`, `region`, `country`) met sufficiency thresholds (`N >= 30`, `Active >= 20`, `Cancelled >= 20`), with modest regional Recall variations (`0.5294` Canada to `0.6543` UK) attributable to sample variance and plan/engagement mix rather than proven causal bias.
+---
+
+## Module 2 Summary: Customer Watch-Time Prediction (Regression)
+
+- **Target (`y_reg = watch_time_minutes`)**: Continuous range `10`–`180` minutes (`162` unique values, `mean = 85.00`, `std = 28.09`, `median = 83.00`, `skew = 0.1710`).
+- **Train / Test Split**: Independent 80:20 split (`random_state=42`): `X_train_reg` (`40,000`), `X_test_reg` (`10,000`, protected until Phase 10 final evaluation).
+- **Engineered Event-Time Feature**: `tenure_at_watch = (date_watched - subscription_start_date).dt.days` (`0`–`300` days, replacing Module 1's global-max `tenure_days`).
+
+### Module 2 Leakage & Temporal-Validity Audit
+- **Excluded due to Target Leakage**:
+  - `session_count`: `max(1, watch_time_minutes // 30)` matches **50,000 / 50,000 rows (`100%`)**.
+  - `watch_time_per_session`: directly computed from `watch_time_minutes / session_count`.
+  - `completion_percentage`: matches `min(100, floor(watch_time_minutes / plan_denom * 100))` on **99.98%** of rows (`Basic=60`, `Standard=90`, `Premium=120`).
+- **Excluded due to Unverified Pre-Event Window / Post-Watch Timing**:
+  - `days_since_last_watch`: exceeds `tenure_at_watch` on **5,036 / 50,000 rows (`10.07%`)**.
+  - `content_diversity_score`: spans `0.21`–`0.99` even on all `162` Day-0 rows (`tenure_at_watch == 0`), with no pre-event window timestamp.
+  - `avg_weekly_watch_time`: no observation-window timestamp proving pre-session availability (near-zero within-plan correlation with target).
+  - `rating` & `liked`: post-watch feedback (`liked` deterministic `rating >= 4`).
+  - `tenure_days` (Module 1 global-max `2025-04-14`), `churn_status`, `subscription_end_date`, `user_id`, `title`, raw dates, `release_year`.
+- **Safe Candidate Pool (`15` Columns)**: `monthly_fee`, `tenure_at_watch`, plus `13` pre-event/context categoricals (`subscription_plan`, `country`, `region`, `age_group`, `gender`, `payment_method`, `discount_applied`, `content_type`, `genre`, `language`, `device_type`, `time_of_day`, `recommendation_source`).
+- **Collinearity Resolution (Phase 5)**: Full `drop="first"` encoded design matrix (`Spec A`) exhibited `VIF = inf` due to cross-group exact dependencies (`monthly_fee` $\leftrightarrow$ `subscription_plan` and `country` $\leftrightarrow$ `region`). Removing redundant `monthly_fee` and `region` (`Spec B`, `45` encoded features) reduced Max VIF to **`1.8438`**.
+
+### Module 2 Cross-Validation (`X_train_reg`) & Final Held-Out Test Results (`X_test_reg`, $n = 10,000$)
+
+#### 5-Fold Cross-Validation (`X_train_reg`, Mean ± Std)
+| Model | CV MAE | CV MSE | CV RMSE | CV R² |
+|---|---:|---:|---:|---:|
+| **Simple Linear Regression (`monthly_fee`)** | 12.0412 ± 0.1014 | 227.7041 | 15.0892 ± 0.1370 | 0.7104 ± 0.0030 |
+| **Multiple Linear Regression (`Spec B`: Plan + Country + Context)** | 11.9818 ± 0.0901 | 225.4547 | 15.0146 ± 0.1327 | 0.7133 ± 0.0029 |
+| **Polynomial Regression (`Degree 2` on `monthly_fee`)** | 11.9750 ± 0.0924 | 225.1307 | 15.0038 ± 0.1346 | 0.7137 ± 0.0029 |
+| *Polynomial Regression (`Degree 2` on continuous `tenure_at_watch`)* | 23.3989 ± 0.1218 | 786.6202 | 28.0463 ± 0.1547 | -0.0003 ± 0.0005 |
+
+#### Final Held-Out Test Comparison (`X_test_reg`, $n = 10,000$)
+| Model | MAE (min) | MSE ($\text{min}^2$) | RMSE (min) | R² |
+|---|---:|---:|---:|---:|
+| **Simple Linear Regression (`monthly_fee`)** | 12.0739 | 230.1009 | 15.1691 | 0.7117 |
+| **Multiple Linear Regression (`Spec B`: Non-Redundant)** | 12.0110 | 227.7942 | 15.0929 | 0.7146 |
+| **Polynomial Regression (`Degree 2` on `monthly_fee`; Deg 3 rank-redundant)** | **11.9986** | **227.3737** | **15.0789** | **0.7151** |
+
+- **Key Regression Takeaways**:
+  - `monthly_fee` / `subscription_plan` drives virtually all predictable variance (`R² ≈ 0.71`): `Basic` averages `~59.6 min`, `Standard` `~89.4 min`, and `Premium` `~119.4 min`.
+  - **Degree 3** on `monthly_fee` is **rank-redundant** (`matrix rank = 3 < 4` columns because `monthly_fee` has only 3 unique values), while **Degree 2** captures the slight non-constant step between plans (`R²: 0.7117 -> 0.7151`).
+  - Residual diagnostics show symmetric, zero-mean, homoscedastic errors across all plans (`std ≈ 15.0 min`), confirming remaining variance stems from within-plan behavioral noise not captured by static pre-event attributes.
 
 ---
 
-## Syllabus Coverage Summary
+## CE-2 Syllabus Coverage Summary
 
-- **Already Implemented (Part A)**: Data loading & inspection, target imbalance & `subscription_end_date` leakage detection, OHE / MinMax / StandardScaler / SimpleImputer / ColumnTransformer, feature engineering (`tenure_days`, `watch_time_per_session`) & ablation, Baseline & Balanced Logistic Regression, KNN (`K=5`), PCA demo.
-- **Newly Implemented (Part B)**: Environment verification cell, Data Quality Re-Audit (`X_train`-only target checks), practical NumPy implementation, Decision Tree, Random Forest, `LinearSVC`, sampled `RBF SVC` (`decision_function` without deprecated `probability` warning), Gaussian Naive Bayes, 5-fold Stratified CV pipelines, multi-metric `GridSearchCV` / `RandomizedSearchCV(n_iter=12)`, Validation & Learning Curves, `SelectKBest`, `RFE`, RF MDI vs Permutation Importance, controlled PCA Before-vs-After CV experiment, `X_train`-only K-Means (Full vs Reduced) + Hierarchical + DBSCAN clustering, Ethical AI & Fairness audit.
-- **Not Suitable / Theoretical / Future Scope**: Conditional multi-table Data Integration (only 1 CSV supplied), Generative AI retention assistant (documented grounded template), General/Super AI & Reactive Machines, Linear/Polynomial Regression, Reinforcement Learning, Apriori/FP-Growth, and Recommendation Systems.
+- **Module 1 (Classification & Unsupervised Learning)**: Data audit, NumPy, Logistic Regression, Balanced LR, KNN, Decision Tree, Random Forest, LinearSVC, sampled RBF SVC, Gaussian Naive Bayes, 5-fold Stratified CV, `GridSearchCV`/`RandomizedSearchCV`, Bias-Variance curves, `SelectKBest`, `RFE`, MDI vs Permutation Importance, PCA comparison, K-Means (Full vs Reduced), Agglomerative Ward, DBSCAN, Subgroup Fairness Audit.
+- **Module 2 (Regression)**: Target & temporal leakage audit (`tenure_at_watch`), Simple Linear Regression ($y = mx + c$), Multiple Linear Regression ($y = b_0 + \sum b_i x_i$) with full design-matrix VIF (`drop="first"`), Polynomial Regression (`PolynomialFeatures` Degrees 1–3 + discrete rank analysis + continuous `tenure_at_watch` check), `MAE`, `MSE`, `RMSE`, `R²`, 5-fold CV, residual & overfitting diagnostics.
+- **Not Suitable / Future Scope**: Multi-table Data Integration, live GenAI narrative assistant, General/Super AI, Reinforcement Learning, Apriori/FP-Growth, Recommendation Systems.
 
 ---
 
-## Environment & Reproduction
+## Environment, Notebook Reproduction & V1 Web Frontend
 
-Verified execution environment (`/home/ishu/ml/ml_env`):
-- Python `3.12.3`, pandas `3.0.3`, numpy `2.5.1`, scipy `1.18.0`, scikit-learn `1.9.0`, matplotlib `3.11.0`, seaborn `0.13.2`, nbconvert `7.17.1`, nbclient `0.11.0`.
+Verified environment (`/home/ishu/ml/ml_env`): Python `3.12.3`, pandas `3.0.3`, numpy `2.5.1`, scipy `1.18.0`, scikit-learn `1.9.0`, matplotlib `3.11.0`, seaborn `0.13.2`, nbconvert `7.17.1`, nbclient `0.11.0`.
 
-To execute the notebook into a separate output file without overwriting the saved deliverable:
+To execute the combined Modules 1 + 2 notebook into a separate output file:
 ```bash
 /home/ishu/ml/ml_env/bin/jupyter nbconvert --to notebook --execute \
-  Netflix_Churn_Syllabus_Implementation_v2.ipynb \
-  --output Netflix_Churn_Syllabus_Implementation_v2_executed.ipynb
+  Netflix_Churn_and_Watch_Time_Regression_v3.ipynb \
+  --output Netflix_Churn_and_Watch_Time_Regression_v3_executed.ipynb
+```
+
+### Version 1 Churn Frontend (Local Demo)
+- [export_model_from_notebook.py](./export_model_from_notebook.py), [validator.py](./validator.py), [app.py](./app.py), [frontend/](./frontend/), [tests/test_frontend_backend.py](./tests/test_frontend_backend.py).
+```bash
+/home/ishu/ml/ml_env/bin/python -m unittest discover -s tests -v
+/home/ishu/ml/ml_env/bin/python app.py --port 8000
 ```

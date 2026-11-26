@@ -1,0 +1,482 @@
+{
+  "model_name": "Tuned Random Forest (Balanced)",
+  "model_version": "v1.0.0-rf-v2nb",
+  "notebook_source": "Netflix_Churn_Syllabus_Implementation_v2.ipynb",
+  "executed_dependency_cells": [
+    2,
+    6,
+    36,
+    90,
+    103,
+    107,
+    109,
+    113,
+    115,
+    117,
+    119,
+    121,
+    200
+  ],
+  "sklearn_version": "1.9.0",
+  "pandas_version": "3.0.3",
+  "reference_date": "2025-04-14",
+  "training_samples": 40000,
+  "test_samples": 10000,
+  "feature_order": [
+    "monthly_fee",
+    "watch_time_minutes",
+    "session_count",
+    "completion_percentage",
+    "rating",
+    "days_since_last_watch",
+    "avg_weekly_watch_time",
+    "content_diversity_score",
+    "tenure_days",
+    "watch_time_per_session",
+    "age_group",
+    "gender",
+    "country",
+    "region",
+    "subscription_plan",
+    "payment_method",
+    "discount_applied",
+    "content_type",
+    "genre",
+    "language",
+    "device_type",
+    "time_of_day",
+    "liked",
+    "recommendation_source"
+  ],
+  "numeric_features": [
+    "monthly_fee",
+    "watch_time_minutes",
+    "session_count",
+    "completion_percentage",
+    "rating",
+    "days_since_last_watch",
+    "avg_weekly_watch_time",
+    "content_diversity_score",
+    "tenure_days",
+    "watch_time_per_session"
+  ],
+  "categorical_features": [
+    "age_group",
+    "gender",
+    "country",
+    "region",
+    "subscription_plan",
+    "payment_method",
+    "discount_applied",
+    "content_type",
+    "genre",
+    "language",
+    "device_type",
+    "time_of_day",
+    "liked",
+    "recommendation_source"
+  ],
+  "derived_features": {
+    "monthly_fee": "Derived from verified 1-to-1 subscription_plan -> monthly_fee mapping.",
+    "region": "Derived from verified 1-to-1 country -> region mapping.",
+    "watch_time_per_session": "watch_time_minutes / session_count (requires session_count >= 1).",
+    "tenure_days": "(reference_date - subscription_start_date).days if subscription_start_date supplied, else direct tenure_days."
+  },
+  "plan_to_fee": {
+    "Basic": 8.99,
+    "Standard": 13.99,
+    "Premium": 17.99
+  },
+  "country_to_region": {
+    "Canada": "North America",
+    "Nigeria": "Africa",
+    "South Africa": "Africa",
+    "USA": "North America",
+    "France": "Europe",
+    "Brazil": "South America",
+    "Japan": "Asia",
+    "Germany": "Europe",
+    "India": "Asia",
+    "UK": "Europe"
+  },
+  "allowed_categories": {
+    "age_group": [
+      17,
+      21,
+      30,
+      40,
+      50,
+      60
+    ],
+    "gender": [
+      "Female",
+      "Male"
+    ],
+    "country": [
+      "Brazil",
+      "Canada",
+      "France",
+      "Germany",
+      "India",
+      "Japan",
+      "Nigeria",
+      "South Africa",
+      "UK",
+      "USA"
+    ],
+    "region": [
+      "Africa",
+      "Asia",
+      "Europe",
+      "North America",
+      "South America"
+    ],
+    "subscription_plan": [
+      "Basic",
+      "Premium",
+      "Standard"
+    ],
+    "payment_method": [
+      "Bank Transfer",
+      "Card",
+      "Wallet"
+    ],
+    "discount_applied": [
+      "No",
+      "Yes"
+    ],
+    "content_type": [
+      "Movie",
+      "Series"
+    ],
+    "genre": [
+      "Action",
+      "Animation",
+      "Comedy",
+      "Documentary",
+      "Drama",
+      "Romance",
+      "Sci-Fi",
+      "Thriller"
+    ],
+    "language": [
+      "English",
+      "French",
+      "German",
+      "Hindi",
+      "Japanese",
+      "Portuguese",
+      "Yoruba"
+    ],
+    "device_type": [
+      "Laptop",
+      "Mobile",
+      "TV",
+      "Tablet"
+    ],
+    "time_of_day": [
+      "Afternoon",
+      "Evening",
+      "Morning",
+      "Night"
+    ],
+    "liked": [
+      "No",
+      "Yes"
+    ],
+    "recommendation_source": [
+      "Ads",
+      "Algorithm",
+      "Friend",
+      "Search",
+      "Trending"
+    ]
+  },
+  "numeric_bounds": {
+    "monthly_fee": {
+      "min": 8.99,
+      "max": 17.99,
+      "type": "float"
+    },
+    "watch_time_minutes": {
+      "min": 1.0,
+      "max": 1440.0,
+      "type": "float"
+    },
+    "session_count": {
+      "min": 1,
+      "max": 100,
+      "type": "int"
+    },
+    "completion_percentage": {
+      "min": 0.0,
+      "max": 100.0,
+      "type": "float"
+    },
+    "rating": {
+      "min": 1.0,
+      "max": 5.0,
+      "type": "float"
+    },
+    "days_since_last_watch": {
+      "min": 0.0,
+      "max": 3650.0,
+      "type": "float"
+    },
+    "avg_weekly_watch_time": {
+      "min": 0.0,
+      "max": 10080.0,
+      "type": "float"
+    },
+    "content_diversity_score": {
+      "min": 0.0,
+      "max": 1.0,
+      "type": "float"
+    },
+    "tenure_days": {
+      "min": 0.0,
+      "max": 5000.0,
+      "type": "float"
+    },
+    "watch_time_per_session": {
+      "min": 0.01,
+      "max": 1440.0,
+      "type": "float"
+    }
+  },
+  "risk_bands": [
+    {
+      "name": "Low",
+      "min_prob_inclusive": 0.0,
+      "max_prob_exclusive": 0.4,
+      "basis": "Demonstration tier boundary below the balanced model's 0.50 classification cutoff.",
+      "train_cv_count": 10025,
+      "train_cv_share_pct": 25.06,
+      "observed_churn_rate_pct": 7.57
+    },
+    {
+      "name": "Moderate",
+      "min_prob_inclusive": 0.4,
+      "max_prob_exclusive": 0.5,
+      "basis": "Demonstration watch-zone approaching the balanced model's 0.50 classification cutoff.",
+      "train_cv_count": 13921,
+      "train_cv_share_pct": 34.8,
+      "observed_churn_rate_pct": 15.02
+    },
+    {
+      "name": "High",
+      "min_prob_inclusive": 0.5,
+      "max_prob_exclusive": 1.0001,
+      "basis": "Exact binary classification decision boundary of final_rf_model.predict() (class_weight='balanced').",
+      "train_cv_count": 16054,
+      "train_cv_share_pct": 40.13,
+      "observed_churn_rate_pct": 25.15
+    }
+  ],
+  "verified_test_metrics": {
+    "accuracy": 0.6294,
+    "precision": 0.2543,
+    "recall": 0.5964,
+    "f1": 0.3566,
+    "roc_auc": 0.6384,
+    "average_precision": 0.2442,
+    "pr_auc_trapezoidal": 0.2437
+  },
+  "verified_test_confusion_matrix": {
+    "TN": 5267,
+    "FP": 3011,
+    "FN": 695,
+    "TP": 1027
+  },
+  "train_numeric_reference_stats": {
+    "monthly_fee": {
+      "min": 8.99,
+      "max": 17.99,
+      "overall_mean": 13.0,
+      "active_mean": 13.3,
+      "cancelled_mean": 11.51
+    },
+    "watch_time_minutes": {
+      "min": 10.0,
+      "max": 177.0,
+      "overall_mean": 85.06,
+      "active_mean": 87.11,
+      "cancelled_mean": 75.19
+    },
+    "session_count": {
+      "min": 1.0,
+      "max": 5.0,
+      "overall_mean": 2.36,
+      "active_mean": 2.43,
+      "cancelled_mean": 2.03
+    },
+    "completion_percentage": {
+      "min": 20.0,
+      "max": 100.0,
+      "overall_mean": 91.9,
+      "active_mean": 92.1,
+      "cancelled_mean": 90.95
+    },
+    "rating": {
+      "min": 1.0,
+      "max": 5.0,
+      "overall_mean": 3.42,
+      "active_mean": 3.42,
+      "cancelled_mean": 3.42
+    },
+    "days_since_last_watch": {
+      "min": 0.0,
+      "max": 60.0,
+      "overall_mean": 29.93,
+      "active_mean": 29.94,
+      "cancelled_mean": 29.85
+    },
+    "avg_weekly_watch_time": {
+      "min": 33.0,
+      "max": 499.0,
+      "overall_mean": 256.55,
+      "active_mean": 262.64,
+      "cancelled_mean": 227.25
+    },
+    "content_diversity_score": {
+      "min": 0.2,
+      "max": 1.0,
+      "overall_mean": 0.6,
+      "active_mean": 0.6,
+      "cancelled_mean": 0.6
+    },
+    "tenure_days": {
+      "min": 299.0,
+      "max": 1199.0,
+      "overall_mean": 748.61,
+      "active_mean": 749.11,
+      "cancelled_mean": 746.23
+    },
+    "watch_time_per_session": {
+      "min": 10.0,
+      "max": 59.0,
+      "overall_mean": 37.95,
+      "active_mean": 37.69,
+      "cancelled_mean": 39.16
+    }
+  },
+  "train_plan_churn_rates": {
+    "Basic": {
+      "train_count": 16001,
+      "churn_rate_pct": 25.17
+    },
+    "Premium": {
+      "train_count": 10054,
+      "churn_rate_pct": 7.56
+    },
+    "Standard": {
+      "train_count": 13945,
+      "churn_rate_pct": 15.06
+    }
+  },
+  "global_permutation_importance_top5": [
+    {
+      "feature": "subscription_plan",
+      "perm_f1_drop": 0.04064
+    },
+    {
+      "feature": "monthly_fee",
+      "perm_f1_drop": 0.00549
+    },
+    {
+      "feature": "avg_weekly_watch_time",
+      "perm_f1_drop": 0.00134
+    },
+    {
+      "feature": "completion_percentage",
+      "perm_f1_drop": 0.00087
+    },
+    {
+      "feature": "days_since_last_watch",
+      "perm_f1_drop": 0.00081
+    }
+  ],
+  "synthetic_presets": {
+    "high_risk_demo": {
+      "label": "Synthetic Demo A: Basic Low-Weekly-Watch Profile",
+      "note": "Synthetic interface test example (not a real customer record).",
+      "inputs": {
+        "subscription_plan": "Basic",
+        "country": "India",
+        "age_group": 21,
+        "gender": "Male",
+        "payment_method": "Wallet",
+        "discount_applied": "No",
+        "content_type": "Series",
+        "genre": "Drama",
+        "language": "Hindi",
+        "device_type": "Mobile",
+        "time_of_day": "Night",
+        "rating": 3,
+        "liked": "No",
+        "recommendation_source": "Ads",
+        "watch_time_minutes": 45,
+        "session_count": 2,
+        "completion_percentage": 68,
+        "days_since_last_watch": 35,
+        "avg_weekly_watch_time": 120,
+        "content_diversity_score": 0.45,
+        "tenure_days": 450
+      }
+    },
+    "moderate_risk_demo": {
+      "label": "Synthetic Demo B: Standard Mid-Engagement Profile",
+      "note": "Synthetic interface test example (not a real customer record).",
+      "inputs": {
+        "subscription_plan": "Standard",
+        "country": "USA",
+        "age_group": 30,
+        "gender": "Female",
+        "payment_method": "Card",
+        "discount_applied": "Yes",
+        "content_type": "Movie",
+        "genre": "Thriller",
+        "language": "English",
+        "device_type": "Laptop",
+        "time_of_day": "Evening",
+        "rating": 4,
+        "liked": "Yes",
+        "recommendation_source": "Algorithm",
+        "watch_time_minutes": 85,
+        "session_count": 2,
+        "completion_percentage": 92,
+        "days_since_last_watch": 18,
+        "avg_weekly_watch_time": 240,
+        "content_diversity_score": 0.6,
+        "tenure_days": 740
+      }
+    },
+    "low_risk_demo": {
+      "label": "Synthetic Demo C: Premium High-Engagement Profile",
+      "note": "Synthetic interface test example (not a real customer record).",
+      "inputs": {
+        "subscription_plan": "Premium",
+        "country": "UK",
+        "age_group": 40,
+        "gender": "Female",
+        "payment_method": "Bank Transfer",
+        "discount_applied": "No",
+        "content_type": "Series",
+        "genre": "Sci-Fi",
+        "language": "English",
+        "device_type": "TV",
+        "time_of_day": "Evening",
+        "rating": 5,
+        "liked": "Yes",
+        "recommendation_source": "Friend",
+        "watch_time_minutes": 140,
+        "session_count": 4,
+        "completion_percentage": 98,
+        "days_since_last_watch": 5,
+        "avg_weekly_watch_time": 400,
+        "content_diversity_score": 0.78,
+        "tenure_days": 950
+      }
+    }
+  }
+}
